@@ -1,0 +1,76 @@
+{
+  "version": "eosio::abi/1.2",
+  "structs": [
+    {
+      "name": "ExtendedSymbol",
+      "base": "",
+      "fields": [
+        {
+          "name": "sym",
+          "type": "symbol"
+        },
+        {
+          "name": "contract",
+          "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "XprSwap",
+      "base": "",
+      "fields": [
+        {
+          "name": "tokenIn",
+          "type": "ExtendedSymbol"
+        },
+        {
+          "name": "tokenOut",
+          "type": "ExtendedSymbol"
+        }
+      ]
+    },
+    {
+      "name": "sayhello",
+      "base": "",
+      "fields": [
+        {
+          "name": "text",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "xprswaps",
+      "base": "",
+      "fields": [
+        {
+          "name": "maker",
+          "type": "name"
+        },
+        {
+          "name": "orders",
+          "type": "XprSwap[]"
+        }
+      ]
+    }
+  ],
+  "types": [],
+  "actions": [
+    {
+      "name": "sayhello",
+      "type": "sayhello",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "xprswaps",
+      "type": "xprswaps",
+      "ricardian_contract": ""
+    }
+  ],
+  "tables": [],
+  "ricardian_clauses": [],
+  "variants": [],
+  "action_results": [],
+  "abi_extensions": [],
+  "error_messages": []
+}
