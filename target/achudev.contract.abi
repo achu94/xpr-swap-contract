@@ -2,6 +2,28 @@
   "version": "eosio::abi/1.2",
   "structs": [
     {
+      "name": "Achuswap",
+      "base": "",
+      "fields": [
+        {
+          "name": "tokenContract",
+          "type": "name"
+        },
+        {
+          "name": "to",
+          "type": "name"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "memo",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "ExtendedSymbol",
       "base": "",
       "fields": [
@@ -30,12 +52,16 @@
       ]
     },
     {
-      "name": "sayhello",
+      "name": "achuswap",
       "base": "",
       "fields": [
         {
-          "name": "text",
-          "type": "string"
+          "name": "from",
+          "type": "name"
+        },
+        {
+          "name": "orders",
+          "type": "Achuswap[]"
         }
       ]
     },
@@ -57,8 +83,8 @@
   "types": [],
   "actions": [
     {
-      "name": "sayhello",
-      "type": "sayhello",
+      "name": "achuswap",
+      "type": "achuswap",
       "ricardian_contract": ""
     },
     {

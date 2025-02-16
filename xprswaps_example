@@ -1,0 +1,23 @@
+proton action achu xprswaps '
+    {
+  "maker": "achu",
+  "orders": [
+    {
+      "tokenIn": {
+        "sym": "4,XPR",
+        "contract": "eosio.token"        
+      },
+      "tokenOut": {
+        "sym": "6,XUSDC",
+        "contract": "xtokens"
+      }
+    }
+  ]
+}
+' achu
+
+{ "quantity":"100.000 XPR", "contract": "eosio.token" } // extendet asset
+{ "quantity":"0.0100 XUSDC", "contract": "xtokens" } // extendet asset
+
+[{ "sym": "4,XPR", "contract": "eosio.token"}] // extendet symbol
+{ "sym": "8,XPRUSDC", "contract": "eosio.token"} // extendet symbol

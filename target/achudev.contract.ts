@@ -17,6 +17,7 @@ import {
     ExtendedSymbol
 } from "proton-tsc";
 import { getBalance } from "proton-tsc/token";
+import { sendTransferToken } from "proton-tsc/token";
 
 
 @packer(nocodegen)
@@ -190,6 +191,48 @@ export class depositOrder implements _chain.Packer {
 
 
 @packer(nocodegen)
+export class Deposit implements _chain.Packer {
+    
+    constructor(
+        public owner: Name = new Name(),
+        public tokens: ExtendedAsset = new ExtendedAsset()
+    ) {
+        
+    }
+    pack(): u8[] {
+        let enc = new _chain.Encoder(this.getSize());
+        enc.pack(this.owner);
+        enc.pack(this.tokens);
+        return enc.getBytes();
+    }
+    
+    unpack(data: u8[]): usize {
+        let dec = new _chain.Decoder(data);
+        
+        {
+            let obj = new Name();
+            dec.unpack(obj);
+            this.owner = obj;
+        }
+        
+        {
+            let obj = new ExtendedAsset();
+            dec.unpack(obj);
+            this.tokens = obj;
+        }
+        return dec.getPos();
+    }
+
+    getSize(): usize {
+        let size: usize = 0;
+        size += this.owner.getSize();
+        size += this.tokens.getSize();
+        return size;
+    }
+}
+
+
+@packer(nocodegen)
 export class XprSwap implements _chain.Packer {
     
     constructor(
@@ -231,12 +274,90 @@ export class XprSwap implements _chain.Packer {
 }
 
 
+@packer(nocodegen)
+export class Achuswap implements _chain.Packer {
+    
+    constructor(
+        public tokenContract: Name = new Name(),
+        public to: Name = new Name(),
+        public quantity: Asset = new Asset(),
+        public memo: string = ""
+    ) {
+        
+    }
+    pack(): u8[] {
+        let enc = new _chain.Encoder(this.getSize());
+        enc.pack(this.tokenContract);
+        enc.pack(this.to);
+        enc.pack(this.quantity);
+        enc.packString(this.memo);
+        return enc.getBytes();
+    }
+    
+    unpack(data: u8[]): usize {
+        let dec = new _chain.Decoder(data);
+        
+        {
+            let obj = new Name();
+            dec.unpack(obj);
+            this.tokenContract = obj;
+        }
+        
+        {
+            let obj = new Name();
+            dec.unpack(obj);
+            this.to = obj;
+        }
+        
+        {
+            let obj = new Asset();
+            dec.unpack(obj);
+            this.quantity = obj;
+        }
+        this.memo = dec.unpackString();
+        return dec.getPos();
+    }
+
+    getSize(): usize {
+        let size: usize = 0;
+        size += this.tokenContract.getSize();
+        size += this.to.getSize();
+        size += this.quantity.getSize();
+        size += _chain.Utils.calcPackedStringLength(this.memo);
+        return size;
+    }
+}
+
+
 @contract
 export class achudev extends Contract {
 
-    @action("sayhello")
-    sayhello(text: string): void {
-        print(text);
+    @action("achuswap")
+    achuswap(from: Name, orders: Achuswap[]): void {
+        requireAuth(from);
+
+        for (let i = 0; i < orders.length; i++) {
+            const order = orders[i];
+
+            const to = order.to;
+            const tokenContract = order.tokenContract;
+            const tokenIn = order.quantity;
+            const memo = order.memo;
+
+            // CHECKS
+            check(tokenIn.getSize() > 0, "Invalid quantity: Must be greater than 0");
+
+            check(isAccount(tokenContract), 'Contract is not a valid accoutn!');
+            check(isAccount(to), 'to is not a valid accoutn!');
+
+            sendTransferToken(
+                tokenContract,
+                from,
+                to,
+                tokenIn,
+                memo
+            );
+        }
     }
 
     // @action("xprswap")
@@ -272,26 +393,9 @@ export class achudev extends Contract {
     //     swapAction.send();
     // }
 
+
     @action("xprswaps")
     xprswaps(maker: Name, orders: XprSwap[]): void {
-
-// proton action achu xprswaps '
-//     {
-//         "maker": "achu",
-//         "orders": [
-//             {
-//                 "tokenIn": {
-//                     "sym": "4,XPR",
-//                     "contract": "eosio.token"
-//                 },
-//                 "tokenOut": {
-//                     "sym": "6,XUSDC",
-//                     "contract": "xtokens"
-//                 }
-//             }
-//         ]
-//     }
-// ' achu
 
         requireAuth(maker);
 
@@ -323,44 +427,64 @@ export class achudev extends Contract {
         // Define the authorization (permission level)
         const authorization = [new PermissionLevel(maker, Name.fromU64(0x3232EDA800000000))];
 
-        // Define the action data for the swap
-        // const actionData = new makeOrder(maker, makerIn, makerOutMin, allowPartial, deadlineSecs);
-
         const symbols = new depositOrder(maker, [token])
 
-        const depositAction = Action.new(
+        const depositPrep = Action.new(
             poolContract, // Contract account
             depostAction, // Action name
             authorization, // Authorization
             symbols // Action data (serialized)
         );
 
-        depositAction.send();
+        depositPrep.send();
     }
 }
 
 
-class sayhelloAction implements _chain.Packer {
+class achuswapAction implements _chain.Packer {
     constructor (
-        public text: string = "",
+        public from: _chain.Name | null = null,
+        public orders: Array<_achudev_contract.Achuswap> | null = null,
     ) {
     }
 
     pack(): u8[] {
         let enc = new _chain.Encoder(this.getSize());
-        enc.packString(this.text);
+        enc.pack(this.from!);
+        enc.packObjectArray(this.orders!);
         return enc.getBytes();
     }
     
     unpack(data: u8[]): usize {
         let dec = new _chain.Decoder(data);
-        this.text = dec.unpackString();
+        
+        {
+            let obj = new _chain.Name();
+            dec.unpack(obj);
+            this.from! = obj;
+        }
+        
+    {
+        let length = <i32>dec.unpackLength();
+        this.orders! = new Array<_achudev_contract.Achuswap>(length)
+        for (let i=0; i<length; i++) {
+            let obj = new _achudev_contract.Achuswap();
+            this.orders![i] = obj;
+            dec.unpack(obj);
+        }
+    }
+
         return dec.getPos();
     }
 
     getSize(): usize {
         let size: usize = 0;
-        size += _chain.Utils.calcPackedStringLength(this.text);
+        size += this.from!.getSize();
+        size += _chain.calcPackedVarUint32Length(this.orders!.length);
+        for (let i=0; i<this.orders!.length; i++) {
+            size += this.orders![i].getSize();
+        }
+
         return size;
     }
 }
@@ -422,10 +546,10 @@ export function apply(receiver: u64, firstReceiver: u64, action: u64): void {
 	const actionData = _chain.readActionData();
 
 	if (receiver == firstReceiver) {
-		if (action == 0xC1BCD54634000000) {//sayhello
-            const args = new sayhelloAction();
+		if (action == 0x321BAC70D5000000) {//achuswap
+            const args = new achuswapAction();
             args.unpack(actionData);
-            mycontract.sayhello(args.text);
+            mycontract.achuswap(args.from!,args.orders!);
         }
 		if (action == 0xED6F8E1AB8000000) {//xprswaps
             const args = new xprswapsAction();

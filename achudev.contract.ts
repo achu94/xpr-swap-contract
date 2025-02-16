@@ -15,6 +15,7 @@ import {
     ExtendedSymbol
 } from "proton-tsc";
 import { getBalance } from "proton-tsc/token";
+import { sendTransferToken } from "proton-tsc/token";
 
 @packer
 export class TokenTransfer extends ActionData {
@@ -52,6 +53,16 @@ export class depositOrder extends ActionData {
 }
 
 @packer
+export class Deposit extends ActionData {
+    constructor(
+        public owner: Name = new Name(),
+        public tokens: ExtendedAsset = new ExtendedAsset()
+    ) {
+        super();
+    }
+}
+
+@packer
 export class XprSwap extends ActionData {
     constructor(
         public tokenIn: ExtendedSymbol = new ExtendedSymbol(),
@@ -61,13 +72,48 @@ export class XprSwap extends ActionData {
     }
 }
 
+@packer
+export class Achuswap extends ActionData {
+    constructor(
+        public tokenContract: Name = new Name(),
+        public to: Name = new Name(),
+        public quantity: Asset = new Asset(),
+        public memo: string = ""
+    ) {
+        super();
+    }
+}
+
 
 @contract
 export class achudev extends Contract {
 
-    @action("sayhello")
-    sayhello(text: string): void {
-        print(text);
+    @action("achuswap")
+    achuswap(from: Name, orders: Achuswap[]): void {
+        requireAuth(from);
+
+        for (let i = 0; i < orders.length; i++) {
+            const order = orders[i];
+
+            const to = order.to;
+            const tokenContract = order.tokenContract;
+            const tokenIn = order.quantity;
+            const memo = order.memo;
+
+            // CHECKS
+            check(tokenIn.getSize() > 0, "Invalid quantity: Must be greater than 0");
+
+            check(isAccount(tokenContract), 'Contract is not a valid accoutn!');
+            check(isAccount(to), 'to is not a valid accoutn!');
+
+            sendTransferToken(
+                tokenContract,
+                from,
+                to,
+                tokenIn,
+                memo
+            );
+        }
     }
 
     // @action("xprswap")
@@ -103,26 +149,9 @@ export class achudev extends Contract {
     //     swapAction.send();
     // }
 
+
     @action("xprswaps")
     xprswaps(maker: Name, orders: XprSwap[]): void {
-
-// proton action achu xprswaps '
-//     {
-//         "maker": "achu",
-//         "orders": [
-//             {
-//                 "tokenIn": {
-//                     "sym": "4,XPR",
-//                     "contract": "eosio.token"
-//                 },
-//                 "tokenOut": {
-//                     "sym": "6,XUSDC",
-//                     "contract": "xtokens"
-//                 }
-//             }
-//         ]
-//     }
-// ' achu
 
         requireAuth(maker);
 
@@ -156,13 +185,13 @@ export class achudev extends Contract {
 
         const symbols = new depositOrder(maker, [token])
 
-        const depositAction = Action.new(
+        const depositPrep = Action.new(
             poolContract, // Contract account
             depostAction, // Action name
             authorization, // Authorization
             symbols // Action data (serialized)
         );
 
-        depositAction.send();
+        depositPrep.send();
     }
 }
